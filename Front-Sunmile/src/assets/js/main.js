@@ -51,7 +51,7 @@ if (localStorage.getItem('darkMode') === '1') {
    GLOBAL CONFIG
 ============================= */
 
-const API_BASE = 'http://localhost:3000/sunmile'
+const API_BASE = 'https://sunmile-back.vercel.app/sunmile'
 const token = localStorage.getItem('token')
 
 const pageContainer = document.getElementById('page-container')
@@ -366,3 +366,4 @@ document.querySelector('.logout-btn')?.addEventListener('click', () => {
 	localStorage.removeItem('token')
 	window.location.href = '../pages/index.html'
 })
+
