@@ -19,7 +19,7 @@ form.addEventListener('submit', async (e) => {
 	}
 
 	try {
-		const response = await fetch('http://localhost:3000/sunmile/pro', {
+		const response = await fetch('https://sunmile-back.vercel.app/sunmile/pro', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -57,3 +57,4 @@ togglePassword.addEventListener('click', () => {
 		? 'visibility_off'
 		: 'visibility'
 })
+
