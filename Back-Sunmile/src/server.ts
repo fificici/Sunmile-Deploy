@@ -24,5 +24,7 @@ app.use("/sunmile", authRoutes)
 app.use("/sunmile", userRoutes)
 app.use("/sunmile", professionalRoutes)
 app.use("/sunmile", proPostRoutes)
+app.get('/', (req, res) => res.send('Back-end running!'))
 
 export default app
+
