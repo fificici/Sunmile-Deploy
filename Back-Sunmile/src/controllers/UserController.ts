@@ -55,10 +55,14 @@ export class UserController {
 			})
 
 			return res.status(201).json(user)
-		} catch (error) {
-			console.error(error)
-			return res.status(500).json({ message: 'Erro interno do servidor', error })
-		}
+			
+	catch (error) {
+	  console.error('Erro completo ao criar usuário:', error)
+	
+	  return res.status(500).json({
+	    message: error instanceof Error ? error.message : 'Erro desconhecido',
+	    stack: error instanceof Error ? error.stack : ''
+	  })
 	}
 
 	async updateUser(req: Request, res: Response): Promise<Response> {
@@ -143,4 +147,5 @@ export class UserController {
 		}
 	}
 }
+
 
