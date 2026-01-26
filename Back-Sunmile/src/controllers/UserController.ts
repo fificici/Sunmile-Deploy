@@ -12,57 +12,49 @@ const userRepository = new UserRepository()
 
 export class UserController {
 	async createUser(req: Request, res: Response): Promise<Response> {
-		try {
-			const { name, username, email, cpf, birth_date, password } = req.body
-
-			if (!name || !email || !password || !username || !cpf || !birth_date) {
-				return res
-					.status(400)
-					.json({ message: 'Informações obrigatórias não preenchidas' })
-			}
-
-			const userExists = await userRepository.findByEmail(email)
-			const usernameExists = await userRepository.findByUsername(username)
-			const birthDateValid = verifyBirthDate(birth_date)
-			const passwordValid = verifyPassword(password)
-			const cpfValid = verifyCPF(cpf)
-			const usernameValid = verifyUsername(username)
-			const emailValid = verifyEmail(email)
-
-			if (userExists) return res.status(409).json({ message: 'Email já está em uso' })
-			if (usernameExists) return res.status(409).json({ message: 'Nome de usuário já está em uso' })
-			if (!birthDateValid) {
-				return res.status(409).json({ message: 'Data de nascimento inválida ou idade não permitida' })
-			}
-			if (!passwordValid) {
-				return res.status(409).json({ message: 'Senha fraca. Utilize um padrão mais seguro' })
-			}
-			if (!cpfValid) return res.status(409).json({ message: 'CPF inválido' })
-			if (!usernameValid) {
-				return res.status(409).json({
-					message: 'Nome de usuário inválido. Use apenas letras, números, ponto e underline'
-				})
-			}
-			if (!emailValid) return res.status(409).json({ message: 'Email inválido' })
-
-			const user = await userRepository.createAndSave({
-				name,
-				username,
-				email,
-				cpf,
-				birth_date,
-				password
-			})
-
-			return res.status(201).json(user)
-			
-	catch (error) {
-	  console.error('Erro completo ao criar usuário:', error)
+	  try {
+	    const { name, username, email, cpf, birth_date, password } = req.body
 	
-	  return res.status(500).json({
-	    message: error instanceof Error ? error.message : 'Erro desconhecido',
-	    stack: error instanceof Error ? error.stack : ''
-	  })
+	    if (!name || !email || !password || !username || !cpf || !birth_date) {
+	      return res
+	        .status(400)
+	        .json({ message: 'Informações obrigatórias não preenchidas' })
+	    }
+	
+	    const userExists = await userRepository.findByEmail(email)
+	    const usernameExists = await userRepository.findByUsername(username)
+	    const birthDateValid = verifyBirthDate(birth_date)
+	    const passwordValid = verifyPassword(password)
+	    const cpfValid = verifyCPF(cpf)
+	    const usernameValid = verifyUsername(username)
+	    const emailValid = verifyEmail(email)
+	
+	    if (userExists) return res.status(409).json({ message: 'Email já está em uso' })
+	    if (usernameExists) return res.status(409).json({ message: 'Nome de usuário já está em uso' })
+	    if (!birthDateValid) return res.status(409).json({ message: 'Data de nascimento inválida ou idade não permitida' })
+	    if (!passwordValid) return res.status(409).json({ message: 'Senha fraca. Utilize um padrão mais seguro' })
+	    if (!cpfValid) return res.status(409).json({ message: 'CPF inválido' })
+	    if (!usernameValid) return res.status(409).json({ message: 'Nome de usuário inválido. Use apenas letras, números, ponto e underline' })
+	    if (!emailValid) return res.status(409).json({ message: 'Email inválido' })
+	
+	    const user = await userRepository.createAndSave({
+	      name,
+	      username,
+	      email,
+	      cpf,
+	      birth_date,
+	      password
+	    })
+	
+	    return res.status(201).json(user)
+	
+	  } catch (error) {
+	    console.error('Erro completo ao criar usuário:', error)
+	    return res.status(500).json({
+	      message: error instanceof Error ? error.message : 'Erro desconhecido',
+	      stack: error instanceof Error ? error.stack : ''
+	    })
+	  }
 	}
 
 	async updateUser(req: Request, res: Response): Promise<Response> {
@@ -147,5 +139,6 @@ export class UserController {
 		}
 	}
 }
+
 
 
