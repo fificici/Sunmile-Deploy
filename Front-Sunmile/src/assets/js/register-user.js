@@ -28,8 +28,9 @@ form.addEventListener('submit', async (e) => {
 		const result = await response.json()
 
 		if (!response.ok) {
-			alert('Erro: ' + result.message)
-			return
+		  console.error('Erro do backend:', result)
+		  alert('Erro: ' + result.message + '\n\nStack:\n' + (result.stack || ''))
+		  return
 		}
 
 		alert('Usuário criado com sucesso!')
@@ -54,4 +55,5 @@ togglePassword.addEventListener('click', () => {
 		? 'visibility_off'
 		: 'visibility'
 })
+
 
