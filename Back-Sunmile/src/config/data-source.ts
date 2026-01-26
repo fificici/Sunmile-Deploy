@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
   logging: true,
   entities: [
     process.env.NODE_ENV === 'production'
-      ? 'dist/models/*.js'   
-      : 'src/models/*.ts'    
-  ],
+      ? path.join(__dirname, '../models/*.js')
+      : path.join(__dirname, '../models/*.ts')
+  ]
 })
