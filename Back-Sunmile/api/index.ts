@@ -1,13 +1,9 @@
-import { VercelRequest, VercelResponse } from '@vercel/node'
 import app from '../src/server'
 import { AppDataSource } from '../src/config/data-source'
 
 let isInitialized = false
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: any, res: any) {
   try {
 
     if (!isInitialized) {
@@ -15,9 +11,8 @@ export default async function handler(
       isInitialized = true
       console.log('Database initialized successfully')
     }
-    
-    app(req as any, res as any)
-    
+
+    app(req, res)
   } catch (error) {
     console.error('Error in handler:', error)
     res.status(500).json({ error: 'Internal Server Error' })
