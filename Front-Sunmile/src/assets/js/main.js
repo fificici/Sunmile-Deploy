@@ -46,7 +46,6 @@ if (localStorage.getItem('darkMode') === '1') {
 	if (darkToggle) darkToggle.checked = true
 }
 
-
 /* =============================
    GLOBAL CONFIG
 ============================= */
@@ -56,7 +55,6 @@ const token = localStorage.getItem('token')
 
 const pageContainer = document.getElementById('page-container')
 const links = document.querySelectorAll('.menu a')
-
 
 /* =============================
    CURRENT USER
@@ -74,7 +72,6 @@ async function fetchCurrentUser() {
 		return null
 	}
 }
-
 
 /* =============================
    SPA NAVIGATION
@@ -130,7 +127,6 @@ links.forEach(link => {
 	})
 })
 
-
 /* =============================
    POSTS
 ============================= */
@@ -183,7 +179,6 @@ async function loadPosts() {
 	}
 }
 
-
 /* =============================
    CREATE POST MODAL
 ============================= */
@@ -229,7 +224,6 @@ function setupPostModal() {
 	}
 }
 
-
 /* =============================
    PROFESSIONALS
 ============================= */
@@ -270,7 +264,6 @@ async function loadProfessionals() {
 	}
 }
 
-
 /* =============================
    PROFILE (UPDATE / DELETE)
 ============================= */
@@ -285,17 +278,8 @@ function loadProfile(user) {
 	form.name.value = user.name || ''
 	form.username.value = user.username || ''
 	form.email.value = user.email || ''
-
-	if (user.professional) {
-		form.bio.value = user.professional.bio || ''
-		form.phone_number.value = user.professional.phone_number || ''
-		form.pro_registration.value = user.professional.pro_registration || ''
-	}
-
 	if (form.cpf) form.cpf.value = user.cpf || ''
-	if (form.birth_date) {
-		form.birth_date.value = user.birth_date?.split('T')[0] || ''
-	}
+	if (form.birth_date) form.birth_date.value = user.birth_date?.split('T')[0] || ''
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
@@ -311,12 +295,6 @@ function loadProfile(user) {
 
 		let endpoint = `${API_BASE}/users/${user.id}`
 
-		if (user.role === 'pro') {
-			endpoint = `${API_BASE}/pro/${user.id}`
-			body.bio = form.bio.value
-			body.phone_number = form.phone_number.value
-		}
-
 		try {
 			const res = await fetch(endpoint, {
 				method: 'PUT',
@@ -329,15 +307,13 @@ function loadProfile(user) {
 
 			const result = await res.json()
 
-			if (!res.ok) {
-				throw new Error(result.message || 'Erro ao atualizar perfil')
-			}
+			if (!res.ok) throw new Error(result.message)
 
-			status.textContent = result.message || 'Perfil atualizado com sucesso!'
+			status.textContent = 'Perfil atualizado com sucesso!'
 			status.style.color = 'green'
 
 		} catch (err) {
-			status.textContent = err.message || 'Erro ao atualizar perfil.'
+			status.textContent = err.message || 'Erro ao atualizar perfil'
 			status.style.color = 'red'
 		}
 	})
@@ -355,8 +331,69 @@ function loadProfile(user) {
 		localStorage.removeItem('token')
 		window.location.href = '../pages/index.html'
 	})
+
+	setupPasswordModal()
 }
 
+/* =============================
+   PASSWORD MODAL
+============================= */
+
+function setupPasswordModal() {
+	const openBtn = document.getElementById('btn-password')
+	const modal = document.getElementById('password-modal')
+	const cancelBtn = document.getElementById('cancel-password')
+	const form = document.getElementById('password-form')
+	const status = document.getElementById('password-status')
+
+	if (!openBtn || !modal || !cancelBtn || !form) return
+
+	openBtn.onclick = () => {
+		modal.classList.remove('hidden')
+		form.reset()
+		status.textContent = ''
+	}
+
+	cancelBtn.onclick = () => modal.classList.add('hidden')
+
+	form.onsubmit = async (e) => {
+		e.preventDefault()
+
+		const currentPassword = document.getElementById('current-password').value
+		const newPassword = document.getElementById('new-password').value
+
+		status.textContent = 'Atualizando senha...'
+		status.style.color = '#666'
+
+		try {
+			const res = await fetch(`${API_BASE}/users/change-password`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({ currentPassword, newPassword })
+			})
+
+			const result = await res.json()
+
+			if (!res.ok) throw new Error(result.message)
+
+			status.textContent = 'Senha alterada com sucesso!'
+			status.style.color = 'green'
+
+			setTimeout(() => {
+				modal.classList.add('hidden')
+				localStorage.removeItem('token')
+				window.location.href = '../pages/index.html'
+			}, 1500)
+
+		} catch (err) {
+			status.textContent = err.message || 'Erro ao alterar senha'
+			status.style.color = 'red'
+		}
+	}
+}
 
 /* =============================
    LOGOUT
@@ -366,4 +403,3 @@ document.querySelector('.logout-btn')?.addEventListener('click', () => {
 	localStorage.removeItem('token')
 	window.location.href = '../pages/index.html'
 })
-

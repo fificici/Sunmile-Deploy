@@ -32,7 +32,7 @@
       </div>
 
       <div class="perfil-actions">
-        <!--<button type="button" id="btn-password" class="btn-secondary">Alterar Senha</button>-->
+        <button type="button" id="btn-password" class="btn-secondary">Alterar Senha</button>
         <button type="submit" class="btn-primary">Salvar Alterações</button>
         <button id="delete-account-btn" class="delete-account-btn">Deletar Conta</button>
       </div>
@@ -43,4 +43,36 @@
 
   </div>
 
+  <div id="password-modal" class="modal hidden">
+    <div class="modal-content">
+  
+      <h3>Alterar Senha</h3>
+  
+      <form id="password-form">
+  
+        <div class="form-group">
+          <label>Senha atual</label>
+          <input type="password" id="current-password" required>
+        </div>
+  
+        <div class="form-group">
+          <label>Nova senha</label>
+          <input type="password" id="new-password" required>
+        </div>
+  
+        <p id="password-status" class="perfil-status"></p>
+  
+        <div class="modal-actions">
+          <button type="button" id="cancel-password" class="btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            Atualizar Senha
+          </button>
+        </div>
+  
+      </form>
+  
+    </div>
+  </div>
 </div>

@@ -711,6 +711,30 @@ body {
   line-height: 1.4;
 }
 
+/* ===============================
+   MODAL - BOTÕES GENÉRICOS
+================================ */
+
+.modal-actions .btn-primary {
+  background: linear-gradient(to right, #58cc02, #ffcc00);
+  color: #fff;
+}
+
+.modal-actions .btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.modal-actions .btn-secondary {
+  background: var(--purple-color);
+  color: #fff;
+}
+
+.modal-actions .btn-secondary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
 /* -------- RESPONSIVO MOBILE -------- */
 @media (max-width: 980px) {
   body { flex-direction: column; }

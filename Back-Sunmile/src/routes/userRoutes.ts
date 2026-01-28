@@ -8,7 +8,10 @@ const controller = new UserController()
 
 
 router.put('/users/:id', auth.authenticateToken, controller.updateUser)
+
 router.delete('/users/:id', auth.authenticateToken, controller.deleteUser)
+
+router.patch('/users/change-password', auth.authenticateToken, controller.changePassword)
 
 router.post('/users', controller.createUser)
 

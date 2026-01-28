@@ -120,7 +120,7 @@ export class ProfessionalController {
 				return res.status(404).json({ message: 'Profissional não encontrado' })
 			}
 
-			const { name, username, email, password, bio, phone_number } = req.body
+			const { name, username, email, bio, phone_number } = req.body
 
 			if (email && email !== professional.user.email) {
 				if (!verifyEmail(email)) {
@@ -144,10 +144,6 @@ export class ProfessionalController {
 				}
 			}
 
-			if (password && !verifyPassword(password)) {
-				return res.status(400).json({ message: 'Senha fraca. Utilize um padrão mais seguro' })
-			}
-
 			if (phone_number && phone_number !== professional.phone_number) {
 				if (!verifyPhone(phone_number)) {
 					return res
@@ -164,7 +160,6 @@ export class ProfessionalController {
 			if (name) professional.user.name = name
 			if (email) professional.user.email = email
 			if (username) professional.user.username = username
-			if (password) professional.user.password = password
 			if (bio) professional.bio = bio
 			if (phone_number) professional.phone_number = phone_number
 
