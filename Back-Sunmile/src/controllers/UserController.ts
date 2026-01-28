@@ -23,6 +23,7 @@ export class UserController {
 	
 	    const userExists = await userRepository.findByEmail(email)
 	    const usernameExists = await userRepository.findByUsername(username)
+		const cpfExists = await userRepository.findByCPF(cpf)
 	    const birthDateValid = verifyBirthDate(birth_date)
 	    const passwordValid = verifyPassword(password)
 	    const cpfValid = verifyCPF(cpf)
@@ -31,6 +32,7 @@ export class UserController {
 	
 	    if (userExists) return res.status(409).json({ message: 'Email já está em uso' })
 	    if (usernameExists) return res.status(409).json({ message: 'Nome de usuário já está em uso' })
+		if (cpfExists) return res.status(409).json({ message: 'CPF já cadastrado'})
 	    if (!birthDateValid) return res.status(409).json({ message: 'Data de nascimento inválida ou idade não permitida' })
 	    if (!passwordValid) return res.status(409).json({ message: 'Senha fraca. Utilize um padrão mais seguro' })
 	    if (!cpfValid) return res.status(409).json({ message: 'CPF inválido' })

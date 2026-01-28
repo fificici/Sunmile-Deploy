@@ -18,6 +18,10 @@ export class UserRepository {
 		})
 	}
 
+	findByCPF(cpf: string): Promise<User | null> {
+		return this.repository.findOneBy({ cpf })
+	}
+
 	findByEmail(email: string): Promise<User | null> {
 		return this.repository.findOneBy({ email })
 	}

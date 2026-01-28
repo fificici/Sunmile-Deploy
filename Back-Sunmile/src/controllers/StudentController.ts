@@ -52,7 +52,7 @@ export class StudentController {
 			const usernameValid = verifyUsername(username)
 			const phoneValid = verifyPhone(phone_number)
 			const emailValid = verifyEmail(email)
-
+			
 			if (userExists) return res.status(409).json({ message: 'Email já está em uso' })
 			if (usernameExists) return res.status(409).json({ message: 'Nome de usuário já está em uso' })
 			if (phoneExists) return res.status(409).json({ message: 'Número de telefone já está em uso' })

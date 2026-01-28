@@ -53,6 +53,7 @@ export class ProfessionalController {
 
 			const userExists = await userRepository.findByEmail(email)
 			const usernameExists = await userRepository.findByUsername(username)
+			const cpfExists = await userRepository.findByCPF(cpf)
 			const phoneExists = await professionalRepository.findByPhone(phone_number)
 			const registrationExists = await professionalRepository.findByRegistration(pro_registration)
 			const birthDateValid = verifyBirthDate(birth_date)
@@ -64,6 +65,7 @@ export class ProfessionalController {
 
 			if (userExists) return res.status(409).json({ message: 'Email já está em uso' })
 			if (usernameExists) return res.status(409).json({ message: 'Nome de usuário já está em uso' })
+			if (cpfExists) return res.status(409).json({ message: 'CPF já cadastrado'})
 			if (phoneExists) return res.status(409).json({ message: 'Número de telefone já está em uso' })
 			if (registrationExists) return res.status(409).json({ message: 'Registro profissional já está em uso' })
 			if (!birthDateValid) return res.status(409).json({ message: 'Data de nascimento inválida ou idade não permitida' })
