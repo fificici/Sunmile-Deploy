@@ -772,6 +772,7 @@ body {
 .modal-actions .btn-secondary {
   background: var(--purple-color);
   color: #fff;
+  margin-top: 3px;
 }
 
 .modal-actions .btn-secondary:hover {
