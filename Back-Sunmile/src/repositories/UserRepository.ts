@@ -13,8 +13,7 @@ export class UserRepository {
 
 	async findById(id: number): Promise<User | null> {
 		return this.repository.findOne({
-			where: { id },
-			relations: ['professional'],
+		  where: { id }
 		})
 	}
 

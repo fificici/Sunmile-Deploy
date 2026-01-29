@@ -9,25 +9,6 @@ const darkToggle = document.querySelector('#darkModeToggle')
 settingsButton?.addEventListener('click', (e) => {
 	e.stopPropagation()
 	settingsMenu.classList.toggle('active')
-
-	if (!settingsMenu.classList.contains('active')) return
-
-	const rect = settingsButton.getBoundingClientRect()
-	const padding = 8
-
-	let left = rect.right + padding
-	let top = rect.top
-
-	if (left + settingsMenu.offsetWidth > window.innerWidth) {
-		left = rect.left - settingsMenu.offsetWidth - padding
-	}
-
-	if (top + settingsMenu.offsetHeight > window.innerHeight) {
-		top = window.innerHeight - settingsMenu.offsetHeight - padding
-	}
-
-	settingsMenu.style.left = `${left}px`
-	settingsMenu.style.top = `${top}px`
 })
 
 document.addEventListener('click', (e) => {
@@ -62,11 +43,22 @@ const links = document.querySelectorAll('.menu a')
 
 async function fetchCurrentUser() {
 	try {
-		const res = await fetch(`${API_BASE}/me`, {
+		const res = await fetch(`${API_BASE}/me/user`, {
 			headers: { Authorization: `Bearer ${token}` }
 		})
-
 		if (!res.ok) throw new Error()
+		return await res.json()
+	} catch {
+		return null
+	}
+}
+
+async function fetchCurrentProfessional() {
+	try {
+		const res = await fetch(`${API_BASE}/me/pro`, {
+			headers: { Authorization: `Bearer ${token}` }
+		})
+		if (!res.ok) return null
 		return await res.json()
 	} catch {
 		return null
@@ -79,16 +71,6 @@ async function fetchCurrentUser() {
 
 async function loadPage(page) {
 	try {
-		if (page === 'posts') {
-			const res = await fetch('../pages/pro-post.html')
-			pageContainer.innerHTML = await res.text()
-
-			await toggleCreatePostButton()
-			loadPosts()
-			setupPostModal()
-			return
-		}
-
 		if (page === 'professionals') {
 			const res = await fetch('../pages/professionals.html')
 			pageContainer.innerHTML = await res.text()
@@ -100,22 +82,23 @@ async function loadPage(page) {
 			const user = await fetchCurrentUser()
 			if (!user) return
 
-			const profilePage = user.role === 'pro'
-				? 'account-pro'
-				: 'account-user'
-
-			const res = await fetch(`../pages/${profilePage}.html`)
-			pageContainer.innerHTML = await res.text()
-
-			loadProfile(user)
+			if (user.role === 'pro') {
+				const professional = await fetchCurrentProfessional()
+				const res = await fetch('../pages/account-pro.html')
+				pageContainer.innerHTML = await res.text()
+				loadProfessionalProfile(user, professional)
+			} else {
+				const res = await fetch('../pages/account-user.html')
+				pageContainer.innerHTML = await res.text()
+				loadUserProfile(user)
+			}
 			return
 		}
 
 		const res = await fetch(`../pages/${page}.html`)
 		pageContainer.innerHTML = await res.text()
 
-	} catch (err) {
-		console.error(err)
+	} catch {
 		pageContainer.innerHTML = '<p>Erro ao carregar página.</p>'
 	}
 }
@@ -128,104 +111,7 @@ links.forEach(link => {
 })
 
 /* =============================
-   POSTS
-============================= */
-
-async function toggleCreatePostButton() {
-	const btn = document.getElementById('create-post-btn')
-	if (!btn) return
-
-	const user = await fetchCurrentUser()
-	btn.style.display = user?.role === 'pro' ? 'inline-block' : 'none'
-}
-
-async function loadPosts() {
-	const container = document.getElementById('posts-list')
-	if (!container) return
-
-	container.innerHTML = '<p>Carregando posts...</p>'
-
-	try {
-		const res = await fetch(`${API_BASE}/pro-posts`)
-		if (!res.ok) throw new Error()
-
-		const posts = await res.json()
-
-		if (!posts.length) {
-			container.innerHTML = '<p>Nenhum post encontrado.</p>'
-			return
-		}
-
-		container.innerHTML = posts.map(post => `
-			<div class="post-card">
-				<div class="post-header">
-					<div class="post-avatar">
-						${post.professional.user.name.charAt(0)}
-					</div>
-					<div class="post-author">
-						<strong>${post.professional.user.name}</strong>
-						<span>@${post.professional.user.username}</span>
-					</div>
-				</div>
-				<div class="post-content">
-					<h3>${post.title}</h3>
-					<p>${post.content}</p>
-				</div>
-			</div>
-		`).join('')
-
-	} catch {
-		container.innerHTML = '<p>Erro ao carregar posts.</p>'
-	}
-}
-
-/* =============================
-   CREATE POST MODAL
-============================= */
-
-function setupPostModal() {
-	const modal = document.getElementById('post-modal')
-	const openBtn = document.getElementById('create-post-btn')
-	const cancelBtn = document.getElementById('cancel-post')
-	const submitBtn = document.getElementById('submit-post')
-
-	if (!modal || !openBtn || !cancelBtn || !submitBtn) return
-
-	openBtn.onclick = () => modal.classList.remove('hidden')
-	cancelBtn.onclick = () => modal.classList.add('hidden')
-
-	submitBtn.onclick = async () => {
-		const title = document.getElementById('post-title').value.trim()
-		const content = document.getElementById('post-content').value.trim()
-
-		if (!title || !content) {
-			alert('Preencha todos os campos')
-			return
-		}
-
-		try {
-			const res = await fetch(`${API_BASE}/pro-posts`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				},
-				body: JSON.stringify({ title, content })
-			})
-
-			if (!res.ok) throw new Error()
-
-			modal.classList.add('hidden')
-			loadPosts()
-
-		} catch {
-			alert('Erro ao criar post')
-		}
-	}
-}
-
-/* =============================
-   PROFESSIONALS
+   PROFESSIONALS LIST
 ============================= */
 
 async function loadProfessionals() {
@@ -242,95 +128,107 @@ async function loadProfessionals() {
 
 		container.innerHTML = professionals.map(pro => `
 			<div class="professional-card">
-				<div class="professional-header">
-					<div class="professional-avatar">
-						${pro.user.name.charAt(0)}
-					</div>
-					<div>
-						<strong>${pro.user.name}</strong>
-						<span>@${pro.user.username}</span>
-					</div>
-				</div>
-				<div class="professional-info">
-					<p><strong>Registro:</strong> ${pro.pro_registration}</p>
-					<p><strong>Telefone:</strong> ${pro.phone_number}</p>
-					${pro.bio ? `<p><strong>Bio:</strong> ${pro.bio}</p>` : ''}
-				</div>
+				<strong>${pro.user.name}</strong>
+				<p>@${pro.user.username}</p>
+				<p><b>Registro:</b> ${pro.pro_registration}</p>
+				<p><b>Telefone:</b> ${pro.phone_number}</p>
+				${pro.bio ? `<p><b>Bio:</b> ${pro.bio}</p>` : ''}
 			</div>
 		`).join('')
-
 	} catch {
 		container.innerHTML = '<p>Erro ao carregar profissionais.</p>'
 	}
 }
 
 /* =============================
-   PROFILE (UPDATE / DELETE)
+   USER PROFILE
 ============================= */
 
-function loadProfile(user) {
+function loadUserProfile(user) {
 	const form = document.getElementById('perfil-form')
 	const status = document.getElementById('status')
-	const deleteBtn = document.getElementById('delete-account-btn')
 
-	if (!form) return
+	form.name.value = user.name
+	form.username.value = user.username
+	form.email.value = user.email
+	form.cpf.value = user.cpf
+	form.birth_date.value = user.birth_date.split('T')[0]
 
-	form.name.value = user.name || ''
-	form.username.value = user.username || ''
-	form.email.value = user.email || ''
-	if (form.cpf) form.cpf.value = user.cpf || ''
-	if (form.birth_date) form.birth_date.value = user.birth_date?.split('T')[0] || ''
-
-	form.addEventListener('submit', async (e) => {
+	form.onsubmit = async (e) => {
 		e.preventDefault()
 
-		status.textContent = 'Salvando...'
-		status.style.color = '#666'
-
-		const body = {
-			name: form.name.value,
-			username: form.username.value,
-			email: form.email.value
-		}
-
-		let endpoint = `${API_BASE}/users/${user.id}`
-
 		try {
-			const res = await fetch(endpoint, {
+			const res = await fetch(`${API_BASE}/users/${user.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
-				body: JSON.stringify(body)
+				body: JSON.stringify({
+					name: form.name.value,
+					username: form.username.value,
+					email: form.email.value
+				})
 			})
 
 			const result = await res.json()
-
 			if (!res.ok) throw new Error(result.message)
 
-			status.textContent = 'Perfil atualizado com sucesso!'
+			status.textContent = 'Perfil atualizado!'
 			status.style.color = 'green'
-
 		} catch (err) {
-			status.textContent = err.message || 'Erro ao atualizar perfil'
+			status.textContent = err.message
 			status.style.color = 'red'
 		}
-	})
+	}
 
-	deleteBtn?.addEventListener('click', async (e) => {
+	setupPasswordModal()
+}
+
+/* =============================
+   PROFESSIONAL PROFILE
+============================= */
+
+function loadProfessionalProfile(user, professional) {
+	const form = document.getElementById('perfil-form')
+	const status = document.getElementById('status')
+
+	form.name.value = user.name
+	form.username.value = user.username
+	form.email.value = user.email
+	form.cpf.value = user.cpf
+	form.birth_date.value = user.birth_date.split('T')[0]
+
+	form.phone_number.value = professional.phone_number
+	form.bio.value = professional.bio || ''
+	form.pro_registration.value = professional.pro_registration
+
+	form.onsubmit = async (e) => {
 		e.preventDefault()
 
-		if (!confirm('Deseja realmente deletar sua conta?')) return
+		try {
+			const res = await fetch(`${API_BASE}/pro/${professional.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({
+					phone_number: form.phone_number.value,
+					bio: form.bio.value
+				})
+			})
 
-		await fetch(`${API_BASE}/users/${user.id}`, {
-			method: 'DELETE',
-			headers: { Authorization: `Bearer ${token}` }
-		})
+			const result = await res.json()
+			if (!res.ok) throw new Error(result.message)
 
-		localStorage.removeItem('token')
-		window.location.href = '../pages/index.html'
-	})
+			status.textContent = 'Perfil profissional atualizado!'
+			status.style.color = 'green'
+		} catch (err) {
+			status.textContent = err.message
+			status.style.color = 'red'
+		}
+	}
 
 	setupPasswordModal()
 }
@@ -346,24 +244,13 @@ function setupPasswordModal() {
 	const form = document.getElementById('password-form')
 	const status = document.getElementById('password-status')
 
-	if (!openBtn || !modal || !cancelBtn || !form) return
+	if (!openBtn) return
 
-	openBtn.onclick = () => {
-		modal.classList.remove('hidden')
-		form.reset()
-		status.textContent = ''
-	}
-
+	openBtn.onclick = () => modal.classList.remove('hidden')
 	cancelBtn.onclick = () => modal.classList.add('hidden')
 
 	form.onsubmit = async (e) => {
 		e.preventDefault()
-
-		const currentPassword = document.getElementById('current-password').value
-		const newPassword = document.getElementById('new-password').value
-
-		status.textContent = 'Atualizando senha...'
-		status.style.color = '#666'
 
 		try {
 			const res = await fetch(`${API_BASE}/users/change-password`, {
@@ -372,24 +259,25 @@ function setupPasswordModal() {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
-				body: JSON.stringify({ currentPassword, newPassword })
+				body: JSON.stringify({
+					currentPassword: current-password.value,
+					newPassword: new-password.value
+				})
 			})
 
 			const result = await res.json()
-
 			if (!res.ok) throw new Error(result.message)
 
-			status.textContent = 'Senha alterada com sucesso!'
+			status.textContent = 'Senha alterada!'
 			status.style.color = 'green'
 
 			setTimeout(() => {
-				modal.classList.add('hidden')
 				localStorage.removeItem('token')
 				window.location.href = '../pages/index.html'
 			}, 1500)
 
 		} catch (err) {
-			status.textContent = err.message || 'Erro ao alterar senha'
+			status.textContent = err.message
 			status.style.color = 'red'
 		}
 	}

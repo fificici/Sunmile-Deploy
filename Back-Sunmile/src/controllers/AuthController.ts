@@ -1,11 +1,14 @@
 import { Request, Response } from 'express'
 import { UserRepository } from '../repositories/UserRepository'
 import { generateToken } from '../config/auth'
+import { ProfessionalRepository } from '../repositories/ProfessionalRepository'
 import * as bcrypt from 'bcryptjs'
 
 const userRepository = new UserRepository()
+const professionalRepository = new ProfessionalRepository()
 
 export class AuthController {
+	
 	async login(req: Request, res: Response): Promise<Response> {
 		try {
 			const { email, password } = req.body
@@ -38,7 +41,7 @@ export class AuthController {
 		}
 	}
 
-	async me(req: Request, res: Response): Promise<Response> {
+	async meUser(req: Request, res: Response): Promise<Response> {
 		try {
 			const id = req.user.id
 			const user = await userRepository.findById(id)
@@ -53,6 +56,24 @@ export class AuthController {
 			return res.status(500).json({ message: 'Erro interno do servidor' })
 		}
 	}
+
+	async meProfessional(req: Request, res: Response): Promise<Response> {
+		try {
+		  const userId = req.user.id
+	  
+		  const professional = await professionalRepository.findByUserId(userId)
+	  
+		  if (!professional) {
+			return res.status(404).json({ message: 'Profissional não encontrado' })
+		  }
+	  
+		  return res.json(professional)
+	  
+		} catch (error) {
+		  console.error(error)
+		  return res.status(500).json({ message: 'Erro interno do servidor' })
+		}
+	}  
 
 	async logout(req: Request, res: Response): Promise<Response> {
 		try {
