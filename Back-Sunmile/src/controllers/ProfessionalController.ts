@@ -108,91 +108,88 @@ export class ProfessionalController {
 	}
 
 	async updateProfessional(req: Request, res: Response): Promise<Response> {
+		
 		try {
-			const id = Number(req.params.id) || req.user.id
-
-			if (req.user.role !== 'admin' && id !== req.user.id) {
-				return res.status(403).json({ message: 'Acesso negado' })
-			}
-
-			const professional = await professionalRepository.findByUserId(id)
+			const userId = req.user.id
+	
+			const professional = await professionalRepository.findByUserId(userId)
+	
 			if (!professional) {
 				return res.status(404).json({ message: 'Profissional não encontrado' })
 			}
-
+	
 			const { name, username, email, bio, phone_number } = req.body
-
+	
 			if (email && email !== professional.user.email) {
 				if (!verifyEmail(email)) {
 					return res.status(400).json({ message: 'Formato de email inválido' })
 				}
-
+	
 				const emailExists = await userRepository.findByEmail(email)
 				if (emailExists && emailExists.id !== professional.user.id) {
 					return res.status(409).json({ message: 'Email já está em uso' })
 				}
 			}
-
+	
 			if (username && username !== professional.user.username) {
 				if (!verifyUsername(username)) {
 					return res.status(400).json({ message: 'Formato de nome de usuário inválido' })
 				}
-
+	
 				const usernameExists = await userRepository.findByUsername(username)
 				if (usernameExists && usernameExists.id !== professional.user.id) {
 					return res.status(409).json({ message: 'Nome de usuário já está em uso' })
 				}
 			}
-
+	
 			if (phone_number && phone_number !== professional.phone_number) {
 				if (!verifyPhone(phone_number)) {
 					return res
 						.status(400)
 						.json({ message: 'Formato de telefone inválido. Use (11) 99999-9999' })
 				}
-
+	
 				const phoneExists = await professionalRepository.findByPhone(phone_number)
 				if (phoneExists && phoneExists.id !== professional.id) {
 					return res.status(409).json({ message: 'Número de telefone já está em uso' })
 				}
 			}
-
+	
 			if (name) professional.user.name = name
 			if (email) professional.user.email = email
 			if (username) professional.user.username = username
-			if (bio) professional.bio = bio
+			if (bio !== undefined) professional.bio = bio
 			if (phone_number) professional.phone_number = phone_number
-
+	
 			await userRepository.saveUser(professional.user)
 			const updatedProfessional = await professionalRepository.savePro(professional)
-
+	
 			return res.json(updatedProfessional)
 		} catch (error) {
 			console.error(error)
 			return res.status(500).json({ message: 'Erro interno do servidor' })
 		}
 	}
+	
 
 	async deleteProfessional(req: Request, res: Response): Promise<Response> {
 		try {
-			const id = Number(req.params.id) || req.user.id
-
-			if (req.user.role !== 'admin' && id !== req.user.id) {
-				return res.status(403).json({ message: 'Acesso negado' })
-			}
-
-			const professional = await professionalRepository.findById(id)
+			const userId = req.user.id
+	
+			const professional = await professionalRepository.findByUserId(userId)
+	
 			if (!professional) {
 				return res.status(404).json({ message: 'Profissional não encontrado' })
 			}
-
+	
 			await professionalRepository.removePro(professional)
 			await userRepository.removeUser(professional.user)
-
+	
 			return res.status(204).send()
 		} catch (error) {
 			console.error(error)
 			return res.status(500).json({ message: 'Erro interno do servidor' })
 		}
 	}
+	
 }
