@@ -9,6 +9,25 @@ const darkToggle = document.querySelector('#darkModeToggle')
 settingsButton?.addEventListener('click', (e) => {
 	e.stopPropagation()
 	settingsMenu.classList.toggle('active')
+
+	if (!settingsMenu.classList.contains('active')) return
+
+	const rect = settingsButton.getBoundingClientRect()
+	const padding = 8
+
+	let left = rect.right + padding
+	let top = rect.top
+
+	if (left + settingsMenu.offsetWidth > window.innerWidth) {
+		left = rect.left - settingsMenu.offsetWidth - padding
+	}
+
+	if (top + settingsMenu.offsetHeight > window.innerHeight) {
+		top = window.innerHeight - settingsMenu.offsetHeight - padding
+	}
+
+	settingsMenu.style.left = `${left}px`
+	settingsMenu.style.top = `${top}px`
 })
 
 document.addEventListener('click', (e) => {
@@ -46,6 +65,7 @@ async function fetchCurrentUser() {
 		const res = await fetch(`${API_BASE}/me/user`, {
 			headers: { Authorization: `Bearer ${token}` }
 		})
+
 		if (!res.ok) throw new Error()
 		return await res.json()
 	} catch {
@@ -71,31 +91,47 @@ async function fetchCurrentProfessional() {
 
 async function loadPage(page) {
 	try {
+		if (page === 'posts') {
+			const res = await fetch('../pages/pro-post.html')
+			pageContainer.innerHTML = await res.text()
+
+			await toggleCreatePostButton()
+			loadPosts()
+			setupPostModal()
+			return
+		}
+
+		if (page === 'professionals') {
+			const res = await fetch('../pages/professionals.html')
+			pageContainer.innerHTML = await res.text()
+			loadProfessionals()
+			return
+		}
+
 		if (page === 'account') {
 			const user = await fetchCurrentUser()
 			if (!user) return
 
-			const pageName = user.role === 'pro'
+			if (user.role === 'pro') {
+				const professional = await fetchCurrentProfessional()
+				if (professional) {
+					user.professional = professional
+				}
+			}
+
+			const profilePage = user.role === 'pro'
 				? 'account-pro'
 				: 'account-user'
 
-			const res = await fetch(`../pages/${pageName}.html`)
+			const res = await fetch(`../pages/${profilePage}.html`)
 			pageContainer.innerHTML = await res.text()
 
-			let professional = null
-			if (user.role === 'pro') {
-				professional = await fetchCurrentProfessional()
-			}
-
-			loadProfile(user, professional)
+			loadProfile(user)
 			return
 		}
 
 		const res = await fetch(`../pages/${page}.html`)
 		pageContainer.innerHTML = await res.text()
-
-		if (page === 'professionals') loadProfessionals()
-		if (page === 'posts') loadPosts()
 
 	} catch (err) {
 		console.error(err)
@@ -111,72 +147,132 @@ links.forEach(link => {
 })
 
 /* =============================
-   PROFESSIONALS LIST
+   POSTS
+============================= */
+
+async function toggleCreatePostButton() {
+	const btn = document.getElementById('create-post-btn')
+	if (!btn) return
+
+	const user = await fetchCurrentUser()
+	btn.style.display = user?.role === 'pro' ? 'inline-block' : 'none'
+}
+
+async function loadPosts() {
+	const container = document.getElementById('posts-list')
+	if (!container) return
+
+	container.innerHTML = '<p>Carregando posts...</p>'
+
+	try {
+		const res = await fetch(`${API_BASE}/pro-posts`)
+		if (!res.ok) throw new Error()
+
+		const posts = await res.json()
+
+		container.innerHTML = posts.map(post => `
+			<div class="post-card">
+				<div class="post-header">
+					<div class="post-avatar">
+						${post.professional.user.name.charAt(0)}
+					</div>
+					<div class="post-author">
+						<strong>${post.professional.user.name}</strong>
+						<span>@${post.professional.user.username}</span>
+					</div>
+				</div>
+				<div class="post-content">
+					<h3>${post.title}</h3>
+					<p>${post.content}</p>
+				</div>
+			</div>
+		`).join('')
+	} catch {
+		container.innerHTML = '<p>Erro ao carregar posts.</p>'
+	}
+}
+
+/* =============================
+   PROFESSIONALS
 ============================= */
 
 async function loadProfessionals() {
 	const container = document.getElementById('professionals-list')
 	if (!container) return
 
-	container.innerHTML = '<p>Carregando...</p>'
+	container.innerHTML = '<p>Carregando profissionais...</p>'
 
 	try {
 		const res = await fetch(`${API_BASE}/professionals`)
+		if (!res.ok) throw new Error()
+
 		const professionals = await res.json()
 
 		container.innerHTML = professionals.map(pro => `
 			<div class="professional-card">
-				<strong>${pro.user.name}</strong>
-				<p>${pro.pro_registration}</p>
-				<p>${pro.phone_number}</p>
-				${pro.bio ? `<p>${pro.bio}</p>` : ''}
+				<div class="professional-header">
+					<div class="professional-avatar">
+						${pro.user.name.charAt(0)}
+					</div>
+					<div>
+						<strong>${pro.user.name}</strong>
+						<span>@${pro.user.username}</span>
+					</div>
+				</div>
+				<div class="professional-info">
+					<p><strong>Registro:</strong> ${pro.pro_registration}</p>
+					<p><strong>Telefone:</strong> ${pro.phone_number}</p>
+					${pro.bio ? `<p><strong>Bio:</strong> ${pro.bio}</p>` : ''}
+				</div>
 			</div>
 		`).join('')
 	} catch {
-		container.innerHTML = '<p>Erro ao carregar profissionais</p>'
+		container.innerHTML = '<p>Erro ao carregar profissionais.</p>'
 	}
 }
 
 /* =============================
-   PROFILE
+   PROFILE (UPDATE / DELETE)
 ============================= */
 
-function loadProfile(user, professional) {
+function loadProfile(user) {
 	const form = document.getElementById('perfil-form')
 	const status = document.getElementById('status')
+	const deleteBtn = document.getElementById('delete-account-btn')
 
 	if (!form) return
 
-	form.name.value = user.name
-	form.username.value = user.username
-	form.email.value = user.email
+	form.name.value = user.name || ''
+	form.username.value = user.username || ''
+	form.email.value = user.email || ''
 
-	if (form.cpf) form.cpf.value = user.cpf
+	if (form.cpf) form.cpf.value = user.cpf || ''
 	if (form.birth_date) {
-		form.birth_date.value = user.birth_date?.split('T')[0]
+		form.birth_date.value = user.birth_date?.split('T')[0] || ''
 	}
 
-	if (professional) {
-		form.phone_number.value = professional.phone_number || ''
-		form.bio.value = professional.bio || ''
-		form.pro_registration.value = professional.pro_registration || ''
+	if (user.professional) {
+		form.phone_number.value = user.professional.phone_number || ''
+		form.bio.value = user.professional.bio || ''
+		form.pro_registration.value = user.professional.pro_registration || ''
 	}
 
-	form.onsubmit = async (e) => {
+	form.addEventListener('submit', async (e) => {
 		e.preventDefault()
 
 		status.textContent = 'Salvando...'
 		status.style.color = '#666'
 
-		let endpoint = `${API_BASE}/users/${user.id}`
 		const body = {
 			name: form.name.value,
 			username: form.username.value,
 			email: form.email.value
 		}
 
-		if (professional) {
-			endpoint = `${API_BASE}/pro/${professional.id}`
+		let endpoint = `${API_BASE}/users/${user.id}`
+
+		if (user.role === 'pro') {
+			endpoint = `${API_BASE}/pro/${user.professional.id}`
 			body.phone_number = form.phone_number.value
 			body.bio = form.bio.value
 		}
@@ -194,14 +290,27 @@ function loadProfile(user, professional) {
 			const result = await res.json()
 			if (!res.ok) throw new Error(result.message)
 
-			status.textContent = 'Atualizado com sucesso!'
+			status.textContent = 'Perfil atualizado com sucesso!'
 			status.style.color = 'green'
-
 		} catch (err) {
 			status.textContent = err.message
 			status.style.color = 'red'
 		}
-	}
+	})
+
+	deleteBtn?.addEventListener('click', async (e) => {
+		e.preventDefault()
+
+		if (!confirm('Deseja realmente deletar sua conta?')) return
+
+		await fetch(`${API_BASE}/users/${user.id}`, {
+			method: 'DELETE',
+			headers: { Authorization: `Bearer ${token}` }
+		})
+
+		localStorage.removeItem('token')
+		window.location.href = '../pages/index.html'
+	})
 
 	setupPasswordModal()
 }
@@ -256,7 +365,6 @@ function setupPasswordModal() {
 				localStorage.removeItem('token')
 				window.location.href = '../pages/index.html'
 			}, 1500)
-
 		} catch (err) {
 			status.textContent = err.message
 			status.style.color = 'red'
