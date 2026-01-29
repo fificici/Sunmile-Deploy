@@ -193,6 +193,51 @@ async function loadPosts() {
 }
 
 /* =============================
+   CREATE POST MODAL
+============================= */
+
+function setupPostModal() {
+	const modal = document.getElementById('post-modal')
+	const openBtn = document.getElementById('create-post-btn')
+	const cancelBtn = document.getElementById('cancel-post')
+	const submitBtn = document.getElementById('submit-post')
+
+	if (!modal || !openBtn || !cancelBtn || !submitBtn) return
+
+	openBtn.onclick = () => modal.classList.remove('hidden')
+	cancelBtn.onclick = () => modal.classList.add('hidden')
+
+	submitBtn.onclick = async () => {
+		const title = document.getElementById('post-title').value.trim()
+		const content = document.getElementById('post-content').value.trim()
+
+		if (!title || !content) {
+			alert('Preencha todos os campos')
+			return
+		}
+
+		try {
+			const res = await fetch(`${API_BASE}/pro-posts`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({ title, content })
+			})
+
+			if (!res.ok) throw new Error()
+
+			modal.classList.add('hidden')
+			loadPosts()
+
+		} catch {
+			alert('Erro ao criar post')
+		}
+	}
+}
+
+/* =============================
    PROFESSIONALS
 ============================= */
 
