@@ -65,6 +65,7 @@ async function fetchCurrentUser() {
 		const res = await fetch(`${API_BASE}/me/user`, {
 			headers: { Authorization: `Bearer ${token}` }
 		})
+
 		if (!res.ok) throw new Error()
 		return await res.json()
 	} catch {
@@ -93,6 +94,7 @@ async function loadPage(page) {
 		if (page === 'posts') {
 			const res = await fetch('../pages/pro-post.html')
 			pageContainer.innerHTML = await res.text()
+
 			await toggleCreatePostButton()
 			loadPosts()
 			setupPostModal()
@@ -112,11 +114,16 @@ async function loadPage(page) {
 
 			if (user.role === 'pro') {
 				const professional = await fetchCurrentProfessional()
-				if (professional) user.professional = professional
+				if (professional) {
+					user.professional = professional
+				}
 			}
 
-			const pageName = user.role === 'pro' ? 'account-pro' : 'account-user'
-			const res = await fetch(`../pages/${pageName}.html`)
+			const profilePage = user.role === 'pro'
+				? 'account-pro'
+				: 'account-user'
+
+			const res = await fetch(`../pages/${profilePage}.html`)
 			pageContainer.innerHTML = await res.text()
 
 			loadProfile(user)
@@ -126,7 +133,8 @@ async function loadPage(page) {
 		const res = await fetch(`../pages/${page}.html`)
 		pageContainer.innerHTML = await res.text()
 
-	} catch {
+	} catch (err) {
+		console.error(err)
 		pageContainer.innerHTML = '<p>Erro ao carregar página.</p>'
 	}
 }
@@ -154,29 +162,78 @@ async function loadPosts() {
 	const container = document.getElementById('posts-list')
 	if (!container) return
 
+	container.innerHTML = '<p>Carregando posts...</p>'
+
 	try {
 		const res = await fetch(`${API_BASE}/pro-posts`)
+		if (!res.ok) throw new Error()
+
 		const posts = await res.json()
 
 		container.innerHTML = posts.map(post => `
 			<div class="post-card">
 				<div class="post-header">
 					<div class="post-avatar">
-						${post.professional.user.profile_pic_url
-							? `<img src="${post.professional.user.profile_pic_url}">`
-							: post.professional.user.name.charAt(0)}
+						${post.professional.user.name.charAt(0)}
 					</div>
-					<div>
+					<div class="post-author">
 						<strong>${post.professional.user.name}</strong>
 						<span>@${post.professional.user.username}</span>
 					</div>
 				</div>
-				<h3>${post.title}</h3>
-				<p>${post.content}</p>
+				<div class="post-content">
+					<h3>${post.title}</h3>
+					<p>${post.content}</p>
+				</div>
 			</div>
 		`).join('')
 	} catch {
 		container.innerHTML = '<p>Erro ao carregar posts.</p>'
+	}
+}
+
+/* =============================
+   CREATE POST MODAL
+============================= */
+
+function setupPostModal() {
+	const modal = document.getElementById('post-modal')
+	const openBtn = document.getElementById('create-post-btn')
+	const cancelBtn = document.getElementById('cancel-post')
+	const submitBtn = document.getElementById('submit-post')
+
+	if (!modal || !openBtn || !cancelBtn || !submitBtn) return
+
+	openBtn.onclick = () => modal.classList.remove('hidden')
+	cancelBtn.onclick = () => modal.classList.add('hidden')
+
+	submitBtn.onclick = async () => {
+		const title = document.getElementById('post-title').value.trim()
+		const content = document.getElementById('post-content').value.trim()
+
+		if (!title || !content) {
+			alert('Preencha todos os campos')
+			return
+		}
+
+		try {
+			const res = await fetch(`${API_BASE}/pro-posts`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({ title, content })
+			})
+
+			if (!res.ok) throw new Error()
+
+			modal.classList.add('hidden')
+			loadPosts()
+
+		} catch {
+			alert('Erro ao criar post')
+		}
 	}
 }
 
@@ -190,8 +247,12 @@ async function loadProfessionals() {
 	const container = document.getElementById('professionals-list')
 	if (!container) return
 
+	container.innerHTML = '<p>Carregando profissionais...</p>'
+
 	try {
 		const res = await fetch(`${API_BASE}/professionals`)
+		if (!res.ok) throw new Error()
+
 		const professionals = await res.json()
 		professionalsCache = professionals
 
@@ -199,24 +260,35 @@ async function loadProfessionals() {
 			<div class="professional-card">
 				<div class="professional-header">
 					<div class="professional-avatar">
-						${pro.user.profile_pic_url
-							? `<img src="${pro.user.profile_pic_url}">`
-							: pro.user.name.charAt(0)}
-					</div>
-					<div>
+						${
+							pro.user.profile_pic_url
+								? `<img src="${pro.user.profile_pic_url}" alt="Avatar de ${pro.user.name}">`
+								: pro.user.name.charAt(0)
+						}
+					</div> 
+					<div class="professional-name">
 						<strong>${pro.user.name}</strong>
 						<span>@${pro.user.username}</span>
 					</div>
 				</div>
 
-				<p><strong>Registro:</strong> ${pro.pro_registration}</p>
-				<p><strong>Telefone:</strong> ${pro.phone_number}</p>
+				<div class="professional-info">
+					<p><strong>Registro:</strong> ${pro.pro_registration}</p>
+					<p><strong>Telefone:</strong> ${pro.phone_number}</p>
 
-				${pro.bio ? `
-					<button class="show-more-btn"
-						onclick="openProfessionalModal(${index})">
-						Exibir mais
-					</button>` : ''}
+					${
+						pro.bio
+							? `
+								<p class="professional-bio">${pro.bio}</p>
+								<button
+									class="show-more-btn"
+									onclick="openProfessionalModal(${index})">
+									Exibir mais
+								</button>
+							`
+							: ''
+					}
+				</div>
 			</div>
 		`).join('')
 	} catch {
@@ -230,7 +302,7 @@ function openProfessionalModal(index) {
 
 	const avatar = document.getElementById('modal-avatar')
 	avatar.innerHTML = pro.user.profile_pic_url
-		? `<img src="${pro.user.profile_pic_url}">`
+		? `<img src="${pro.user.profile_pic_url}" alt="Avatar de ${pro.user.name}">`
 		: pro.user.name.charAt(0)
 
 	document.getElementById('modal-name').textContent = pro.user.name
@@ -242,86 +314,218 @@ function openProfessionalModal(index) {
 	modal.classList.remove('hidden')
 }
 
+window.openProfessionalModal = openProfessionalModal
+window.closeProfessionalModal = closeProfessionalModal
+
+
 function closeProfessionalModal() {
 	document.getElementById('professional-modal').classList.add('hidden')
 }
 
-window.openProfessionalModal = openProfessionalModal
-window.closeProfessionalModal = closeProfessionalModal
+async function updateProfileAvatar(imageUrl) {
+	const res = await fetch(`${API_BASE}/users/me/avatar`, {
+		method: 'PATCH',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		},
+		body: JSON.stringify({ profile_pic_url: imageUrl })
+	})
 
+	if (!res.ok) {
+		throw new Error('Erro ao salvar avatar')
+	}
+}
+  
 /* =============================
-   PROFILE + CROPPER
+   PROFILE (UPDATE / DELETE)
 ============================= */
 
-let cropper = null
-
 function loadProfile(user) {
+	const form = document.getElementById('perfil-form')
+	const status = document.getElementById('status')
+	const deleteBtn = document.getElementById('delete-account-btn')
 	const avatarImg = document.getElementById('profile-avatar')
 	const avatarInput = document.getElementById('avatar-input')
 
-	avatarImg.src = user.profile_pic_url || '../assets/img/avatar-default.png'
+	if (avatarImg) {
+	avatarImg.src = user.profile_pic_url
+		? user.profile_pic_url
+		: '../assets/img/default avatar.jpg'
+	}
 
-	avatarImg.onclick = () => avatarInput.click()
+	if (!form) return
 
-	avatarInput.onchange = () => {
+	form.name.value = user.name || ''
+	form.username.value = user.username || ''
+	form.email.value = user.email || ''
+
+	if (form.cpf) form.cpf.value = user.cpf || ''
+	if (form.birth_date) {
+		form.birth_date.value = user.birth_date?.split('T')[0] || ''
+	}
+
+	if (user.professional) {
+		form.phone_number.value = user.professional.phone_number || ''
+		form.bio.value = user.professional.bio || ''
+		form.pro_registration.value = user.professional.pro_registration || ''
+	}
+
+	avatarImg?.addEventListener('click', () => {
+		avatarInput.click()
+	})
+
+	avatarInput?.addEventListener('change', async () => {
 		const file = avatarInput.files[0]
 		if (!file) return
-
-		const reader = new FileReader()
-		reader.onload = () => {
-			const modal = document.getElementById('cropper-modal')
-			const image = document.getElementById('cropper-image')
-
-			image.src = reader.result
-			modal.classList.remove('hidden')
-
-			if (cropper) cropper.destroy()
-
-			cropper = new Cropper(image, {
-				aspectRatio: 1,
-				viewMode: 1,
-				preview: '.cropper-preview',
-				zoomable: true
-			})
+	  
+		if (!file.type.startsWith('image/')) {
+		  alert('Selecione uma imagem válida')
+		  return
 		}
-		reader.readAsDataURL(file)
+	  
+		const formData = new FormData()
+		formData.append('file', file)
+		formData.append('upload_preset', 'sunmile_unsigned')
+	  
+		try {
+		  avatarImg.style.opacity = '0.5'
+	  
+		  const cloudRes = await fetch(
+			'https://api.cloudinary.com/v1_1/dgvwjb1cj/image/upload',
+			{
+			  method: 'POST',
+			  body: formData
+			}
+		  )
+	  
+		  const cloudData = await cloudRes.json()
+		  if (!cloudData.secure_url) throw new Error()
+	  
+		  avatarImg.src = cloudData.secure_url
+	  
+		  await updateProfileAvatar(cloudData.secure_url)
+	  
+		} catch {
+		  alert('Erro ao enviar imagem')
+		} finally {
+		  avatarImg.style.opacity = '1'
+		}
+	})
+	  
+
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault()
+
+		status.textContent = 'Salvando...'
+		status.style.color = '#666'
+
+		const body = {
+			name: form.name.value,
+			username: form.username.value,
+			email: form.email.value
+		}
+
+		let endpoint = `${API_BASE}/users/${user.id}`
+
+		if (user.role === 'pro') {
+			endpoint = `${API_BASE}/pro/${user.professional.id}`
+			body.phone_number = form.phone_number.value
+			body.bio = form.bio.value
+		}
+
+		try {
+			const res = await fetch(endpoint, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify(body)
+			})
+
+			const result = await res.json()
+			if (!res.ok) throw new Error(result.message)
+
+			status.textContent = 'Perfil atualizado com sucesso!'
+			status.style.color = 'green'
+		} catch (err) {
+			status.textContent = err.message
+			status.style.color = 'red'
+		}
+	})
+
+	deleteBtn?.addEventListener('click', async (e) => {
+		e.preventDefault()
+
+		if (!confirm('Deseja realmente deletar sua conta?')) return
+
+		await fetch(`${API_BASE}/users/${user.id}`, {
+			method: 'DELETE',
+			headers: { Authorization: `Bearer ${token}` }
+		})
+
+		localStorage.removeItem('token')
+		window.location.href = '../pages/index.html'
+	})
+
+	setupPasswordModal()
+}
+
+/* =============================
+   PASSWORD MODAL
+============================= */
+
+function setupPasswordModal() {
+	const openBtn = document.getElementById('btn-password')
+	const modal = document.getElementById('password-modal')
+	const cancelBtn = document.getElementById('cancel-password')
+	const form = document.getElementById('password-form')
+	const status = document.getElementById('password-status')
+
+	if (!openBtn || !modal || !cancelBtn || !form) return
+
+	openBtn.onclick = () => {
+		modal.classList.remove('hidden')
+		form.reset()
+		status.textContent = ''
 	}
 
-	document.getElementById('cancel-crop').onclick = () => {
-		document.getElementById('cropper-modal').classList.add('hidden')
-		cropper?.destroy()
-		cropper = null
-	}
+	cancelBtn.onclick = () => modal.classList.add('hidden')
 
-	document.getElementById('confirm-crop').onclick = async () => {
-		const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 })
+	form.onsubmit = async (e) => {
+		e.preventDefault()
 
-		canvas.toBlob(async blob => {
-			const fd = new FormData()
-			fd.append('file', blob)
-			fd.append('upload_preset', 'sunmile_unsigned')
+		const currentPassword = document.getElementById('current-password').value
+		const newPassword = document.getElementById('new-password').value
 
-			const res = await fetch(
-				'https://api.cloudinary.com/v1_1/dgvwjb1cj/image/upload',
-				{ method: 'POST', body: fd }
-			)
+		status.textContent = 'Atualizando senha...'
+		status.style.color = '#666'
 
-			const data = await res.json()
-			avatarImg.src = data.secure_url
-
-			await fetch(`${API_BASE}/users/me/avatar`, {
+		try {
+			const res = await fetch(`${API_BASE}/users/change-password`, {
 				method: 'PATCH',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
-				body: JSON.stringify({ profile_pic_url: data.secure_url })
+				body: JSON.stringify({ currentPassword, newPassword })
 			})
 
-			document.getElementById('cropper-modal').classList.add('hidden')
-			cropper.destroy()
-			cropper = null
-		})
+			const result = await res.json()
+			if (!res.ok) throw new Error(result.message)
+
+			status.textContent = 'Senha alterada com sucesso!'
+			status.style.color = 'green'
+
+			setTimeout(() => {
+				localStorage.removeItem('token')
+				window.location.href = '../pages/index.html'
+			}, 1500)
+		} catch (err) {
+			status.textContent = err.message
+			status.style.color = 'red'
+		}
 	}
 }
 
