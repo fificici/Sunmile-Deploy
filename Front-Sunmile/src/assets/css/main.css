@@ -695,6 +695,7 @@ body {
 .professional-modal p {
   margin: 6px 0;
   font-size: 0.95rem;
+  text-align: left;
 }
 
 .modal-bio {
@@ -703,6 +704,7 @@ body {
   border-top: 1px solid rgba(0,0,0,0.1);
   font-size: 0.95rem;
   line-height: 1.5;
+  margin-bottom: 16px;
 }
 
 
