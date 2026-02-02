@@ -27,8 +27,8 @@ export class User {
     @Column({ length: 255, nullable: false })
     password: string
 
-    @Column({ length: 255, nullable: true })
-    profile_pic_url: string | null
+    @Column({ type: "varchar", length: 255, nullable: true })
+    profile_pic_url!: string | null
 
     @CreateDateColumn()
     created_at!: Date;
@@ -55,7 +55,7 @@ export class User {
     @OneToOne(() => Professional, professional => professional.user)
     professional?: Professional
 
-    constructor(name: string, username: string, email: string, cpf: string, birth_date: Date, password: string, profile_pic_url?: string, professional?: Professional) {
+    constructor(name: string, username: string, email: string, cpf: string, birth_date: Date, password: string, professional?: Professional) {
         
         this.name = name
         this.username = username
@@ -64,6 +64,5 @@ export class User {
         this.birth_date = birth_date
         this.password = password
         this.professional = professional
-        this.profile_pic_url = profile_pic_url ?? null
     }
 }
