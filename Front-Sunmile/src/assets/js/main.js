@@ -274,6 +274,7 @@ async function loadProfessionals() {
 
 				<div class="professional-info">
 					<p><strong>Registro:</strong> ${pro.pro_registration}</p>
+					<p><strong>Telefone:</strong> ${pro.phone_number}</p>
 
 					${
 						pro.bio
@@ -299,13 +300,11 @@ function openProfessionalModal(index) {
 	const pro = professionalsCache[index]
 	const modal = document.getElementById('professional-modal')
 
-	// Avatar
 	const avatar = document.getElementById('modal-avatar')
 	avatar.innerHTML = pro.user.profile_pic_url
 		? `<img src="${pro.user.profile_pic_url}" alt="Avatar de ${pro.user.name}">`
 		: pro.user.name.charAt(0)
 
-	// Infos públicas
 	document.getElementById('modal-name').textContent = pro.user.name
 	document.getElementById('modal-username').textContent = '@' + pro.user.username
 	document.getElementById('modal-registration').textContent = pro.pro_registration
@@ -314,6 +313,10 @@ function openProfessionalModal(index) {
 
 	modal.classList.remove('hidden')
 }
+
+window.openProfessionalModal = openProfessionalModal
+window.closeProfessionalModal = closeProfessionalModal
+
 
 function closeProfessionalModal() {
 	document.getElementById('professional-modal').classList.add('hidden')

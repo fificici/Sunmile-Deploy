@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sunmile | Principal</title>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
   <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
@@ -45,7 +46,27 @@
 
 </main>
 
+<div id="cropper-modal" class="modal hidden">
+  <div class="modal-content cropper-modal">
+
+    <img id="cropper-image" />
+
+    <div class="cropper-preview-wrapper">
+      <p>Pré-visualização</p>
+      <div class="cropper-preview"></div>
+    </div>
+
+    <div class="cropper-actions">
+      <button id="cancel-crop" class="btn-secondary">Cancelar</button>
+      <button id="confirm-crop" class="btn-primary">Salvar</button>
+    </div>
+
+  </div>
+</div>
+
+
 <script src="../assets/js/main.js"></script>
+<script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
 
 </body>
 </html>

@@ -600,14 +600,13 @@ body {
 .professional-avatar {
   width: 48px;
   height: 48px;
+  padding: 2px; 
   border-radius: 50%;
   background: linear-gradient(135deg, #58cc02, #ffcc00);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.1rem;
+  box-sizing: border-box;
 }
 
 .professional-avatar img {
@@ -615,6 +614,7 @@ body {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  background: #eee;
 }
 
 .professional-name {
@@ -817,6 +817,20 @@ body {
 #profile-avatar:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(88, 204, 2, 0.5);
+}
+
+.cropper-preview-wrapper {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.cropper-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #ddd;
+  margin: 0 auto;
 }
 
 /* -------- RESPONSIVO MOBILE -------- */
