@@ -170,23 +170,33 @@ async function loadPosts() {
 
 		const posts = await res.json()
 
-		container.innerHTML = posts.map(post => `
-			<div class="post-card">
-				<div class="post-header">
-					<div class="post-avatar">
-						${post.professional.user.name.charAt(0)}
+		container.innerHTML = posts.map(post => {
+			const user = post.professional.user
+
+			const avatar = user.profile_pic_url
+				? `<img src="${user.profile_pic_url}" alt="Avatar de ${user.name}">`
+				: user.name.charAt(0)
+
+			return `
+				<div class="post-card">
+					<div class="post-header">
+						<div class="post-avatar">
+							${avatar}
+						</div>
+
+						<div class="post-author">
+							<strong>${user.name}</strong>
+							<span>@${user.username}</span>
+						</div>
 					</div>
-					<div class="post-author">
-						<strong>${post.professional.user.name}</strong>
-						<span>@${post.professional.user.username}</span>
+
+					<div class="post-content">
+						<h3>${post.title}</h3>
+						<p>${post.content}</p>
 					</div>
 				</div>
-				<div class="post-content">
-					<h3>${post.title}</h3>
-					<p>${post.content}</p>
-				</div>
-			</div>
-		`).join('')
+			`
+		}).join('')
 	} catch {
 		container.innerHTML = '<p>Erro ao carregar posts.</p>'
 	}
