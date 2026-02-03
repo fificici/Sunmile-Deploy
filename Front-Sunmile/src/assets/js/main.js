@@ -530,7 +530,7 @@ function loadProfile(user) {
 		})
 
 		localStorage.removeItem('token')
-		window.location.href = '../pages/index.html'
+		window.location.href = '../index.html'
 	})
 
 	setupPasswordModal()
@@ -584,7 +584,7 @@ function setupPasswordModal() {
 
 			setTimeout(() => {
 				localStorage.removeItem('token')
-				window.location.href = '../pages/index.html'
+				window.location.href = '../index.html'
 			}, 1500)
 		} catch (err) {
 			status.textContent = err.message
@@ -599,5 +599,5 @@ function setupPasswordModal() {
 
 document.querySelector('.logout-btn')?.addEventListener('click', () => {
 	localStorage.removeItem('token')
-	window.location.href = '../pages/index.html'
+	window.location.href = '../index.html'
 })
