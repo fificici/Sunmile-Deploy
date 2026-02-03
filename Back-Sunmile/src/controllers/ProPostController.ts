@@ -61,7 +61,7 @@ export class ProPostController {
 			const post = await proPostRepository.createAndSave({
 				title,
 				content,
-				image_urls: image_urls?.length ? image_urls : null,
+				image_urls: image_urls ?? [],
 				professional
 			})
 		

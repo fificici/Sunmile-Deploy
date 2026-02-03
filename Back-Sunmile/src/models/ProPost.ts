@@ -12,7 +12,7 @@ export class ProPost {
 	@Column({ type: 'text' })
 	content!: string
 
-	@Column({ type: 'text', array: true, nullable: true })
+	@Column({ type: 'json', nullable: true })
 	image_urls?: string[]
 
 
