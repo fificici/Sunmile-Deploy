@@ -37,7 +37,7 @@ form.addEventListener('submit', async (e) => {
 		alert('Profissional criado com sucesso!')
 		console.log(result)
 
-		window.location.href = 'index.html'
+		window.location.href = '../index.html'
 
 	} catch (error) {
 		console.error('Erro na requisição:', error)
@@ -57,4 +57,5 @@ togglePassword.addEventListener('click', () => {
 		? 'visibility_off'
 		: 'visibility'
 })
+
 
